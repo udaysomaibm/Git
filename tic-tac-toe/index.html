@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Tic-Tac-Toe</title>
+<title>Tic-Tac-Toe 4×4</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -39,7 +39,7 @@
     border-radius: 12px;
     padding: 28px 32px 32px;
     width: 100%;
-    max-width: 380px;
+    max-width: 460px;
   }
 
   /* Scoreboard */
@@ -110,7 +110,7 @@
   /* Grid */
   .grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 8px;
     margin-bottom: 20px;
   }
@@ -123,7 +123,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 2.4rem;
+    font-size: 1.7rem;
     font-weight: 800;
     cursor: pointer;
     transition: background 0.12s, border-color 0.12s, transform 0.08s;
@@ -192,14 +192,14 @@
     border-top: 1px solid #e5e7eb;
     padding-top: 14px;
     width: 100%;
-    max-width: 380px;
+    max-width: 460px;
   }
 </style>
 </head>
 <body>
 
 <h1>Tic-Tac-Toe</h1>
-<p class="subtitle">Two-player · Classic 3 × 3</p>
+<p class="subtitle">Two-player · Classic 4 × 4</p>
 
 <div class="card">
 
@@ -233,10 +233,17 @@
     <div class="cell" data-index="6"></div>
     <div class="cell" data-index="7"></div>
     <div class="cell" data-index="8"></div>
+    <div class="cell" data-index="9"></div>
+    <div class="cell" data-index="10"></div>
+    <div class="cell" data-index="11"></div>
+    <div class="cell" data-index="12"></div>
+    <div class="cell" data-index="13"></div>
+    <div class="cell" data-index="14"></div>
+    <div class="cell" data-index="15"></div>
   </div>
 
   <div class="btn-row">
-    <button class="btn-new"   id="btn-new">New Game</button>
+    <button class="btn-new"   id="btn-new">New Game1</button>
     <button class="btn-reset" id="btn-reset">Reset Scores</button>
   </div>
 
@@ -247,9 +254,12 @@
 <script>
 (function () {
   const WINS = [
-    [0,1,2],[3,4,5],[6,7,8],
-    [0,3,6],[1,4,7],[2,5,8],
-    [0,4,8],[2,4,6]
+    // rows
+    [0,1,2,3],[4,5,6,7],[8,9,10,11],[12,13,14,15],
+    // cols
+    [0,4,8,12],[1,5,9,13],[2,6,10,14],[3,7,11,15],
+    // diagonals
+    [0,5,10,15],[3,6,9,12]
   ];
 
   let board, current, gameOver;
@@ -266,7 +276,7 @@
   const btnReset = document.getElementById('btn-reset');
 
   function initRound() {
-    board    = Array(9).fill(null);
+    board    = Array(16).fill(null);
     current  = 'X';
     gameOver = false;
     cells.forEach(c => {
@@ -284,9 +294,9 @@
   }
 
   function checkWin() {
-    for (const [a, b, c] of WINS) {
-      if (board[a] && board[a] === board[b] && board[a] === board[c]) {
-        return [a, b, c];
+    for (const [a, b, c, d] of WINS) {
+      if (board[a] && board[a] === board[b] && board[a] === board[c] && board[a] === board[d]) {
+        return [a, b, c, d];
       }
     }
     return null;
