@@ -1,0 +1,1283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nike Product Classification API — Interactive POC</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ─── DESIGN TOKENS (matching Nike deck exactly) ─────────────────────── */
+:root {
+  --ink:     #0b0b0c;
+  --ink2:    #2a2a2e;
+  --muted:   #666b75;
+  --line:    #e5e7eb;
+  --bg:      #ffffff;
+  --bg2:     #f7f7f8;
+  --bg3:     #eef0f3;
+  --dark:    #0b0b0c;
+  --dark2:   #1b1b22;
+  --accent:  #d43f00;
+  --accent2: #0a6cff;
+  --green:   #0a8f5b;
+  --amber:   #c98a00;
+  --red:     #c8321f;
+  --chip:    #eceef2;
+  --orange-light: #ff7a45;
+  --maxw: 1180px;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--bg2);
+  color: var(--ink);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  line-height: 1.55;
+  font-size: 15px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ─── HERO HEADER ────────────────────────────────────────────────────── */
+header.hero {
+  background:
+    radial-gradient(circle at 82% 14%, rgba(212,63,0,.32), transparent 28%),
+    linear-gradient(150deg, #080809 0%, #181820 58%, #252737 100%);
+  color: #fff;
+  padding: 48px 0 36px;
+}
+.wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 24px; }
+.hero-inner { display: flex; align-items: flex-start; justify-content: space-between; gap: 32px; flex-wrap: wrap; }
+.hero-text { flex: 1; min-width: 280px; }
+.kicker {
+  font-size: 11.5px; letter-spacing: .2em; text-transform: uppercase;
+  color: var(--orange-light); font-weight: 800; margin: 0 0 12px;
+}
+.hero h1 {
+  font-size: 32px; line-height: 1.1; margin: 0 0 12px;
+  font-weight: 900; letter-spacing: -.025em;
+}
+.hero h1 span { color: var(--orange-light); }
+.hero .sub { font-size: 15px; color: #d6d6df; max-width: 680px; margin: 0 0 18px; }
+.conf-badge {
+  display: inline-block; font-size: 11px; letter-spacing: .08em; text-transform: uppercase;
+  color: #ffb98f; border: 1px solid #5a3423; padding: 4px 10px; border-radius: 4px;
+  background: rgba(212,63,0,.12);
+}
+.hero-stats {
+  display: flex; gap: 28px; flex-wrap: wrap; margin-top: 20px; padding-top: 20px;
+  border-top: 1px solid rgba(255,255,255,.1);
+}
+.hero-stat .n { font-size: 20px; font-weight: 900; color: #fff; letter-spacing: -.02em; }
+.hero-stat .l { font-size: 11px; color: #9a9aa6; margin-top: 2px; }
+
+/* ─── MAIN LAYOUT ────────────────────────────────────────────────────── */
+main { padding: 28px 0 64px; }
+.poc-layout {
+  display: grid;
+  grid-template-columns: 420px 1fr;
+  gap: 22px;
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .poc-layout { grid-template-columns: 1fr; }
+  .hero h1 { font-size: 24px; }
+}
+
+/* ─── CARDS / PANELS ─────────────────────────────────────────────────── */
+.card {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.04);
+}
+.card-title {
+  font-size: 13px; font-weight: 800; text-transform: uppercase;
+  letter-spacing: .1em; color: var(--accent); margin: 0 0 18px;
+  display: flex; align-items: center; gap: 8px;
+}
+.card-title svg { flex-shrink: 0; }
+
+/* ─── FORM ELEMENTS ──────────────────────────────────────────────────── */
+.form-group { margin-bottom: 16px; }
+.form-group label {
+  display: block; font-size: 12px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .07em;
+  color: var(--muted); margin-bottom: 6px;
+}
+.form-group textarea,
+.form-group input[type="text"],
+.form-group select {
+  width: 100%;
+  padding: 10px 13px;
+  border: 1.5px solid var(--line);
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--ink);
+  background: var(--bg);
+  transition: border-color .15s, box-shadow .15s;
+  appearance: none;
+  -webkit-appearance: none;
+}
+.form-group textarea { resize: vertical; min-height: 80px; }
+.form-group textarea:focus,
+.form-group input[type="text"]:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(212,63,0,.12);
+}
+.form-group select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23666b75' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 34px;
+}
+
+/* ─── COUNTRY CHECKBOXES ─────────────────────────────────────────────── */
+.country-grid {
+  display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px;
+}
+.country-cb {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 12px;
+  border: 1.5px solid var(--line);
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 13px; font-weight: 600;
+  transition: all .15s;
+  user-select: none;
+  background: var(--bg);
+}
+.country-cb input[type="checkbox"] { display: none; }
+.country-cb.checked {
+  border-color: var(--accent);
+  background: rgba(212,63,0,.07);
+  color: var(--accent);
+}
+.country-cb:hover { border-color: var(--accent); }
+
+/* ─── EXAMPLE BUTTONS ────────────────────────────────────────────────── */
+.examples-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+.ex-btn {
+  font-size: 12px; font-weight: 700; padding: 7px 13px;
+  border-radius: 20px; border: 1.5px solid var(--line);
+  background: var(--bg2); cursor: pointer; color: var(--ink2);
+  transition: all .15s; letter-spacing: .01em;
+  display: flex; align-items: center; gap: 5px;
+}
+.ex-btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(212,63,0,.05); }
+.ex-btn .icon { font-size: 14px; }
+
+/* ─── CLASSIFY BUTTON ────────────────────────────────────────────────── */
+.btn-classify {
+  width: 100%; padding: 14px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 800;
+  font-family: inherit;
+  cursor: pointer;
+  letter-spacing: .03em;
+  text-transform: uppercase;
+  transition: background .15s, transform .1s, box-shadow .15s;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  box-shadow: 0 4px 14px rgba(212,63,0,.3);
+  margin-top: 4px;
+}
+.btn-classify:hover { background: #b83800; box-shadow: 0 6px 18px rgba(212,63,0,.4); }
+.btn-classify:active { transform: scale(.98); }
+.btn-classify.loading { opacity: .8; pointer-events: none; }
+
+/* ─── RESULTS PANEL ──────────────────────────────────────────────────── */
+#results-panel { display: none; }
+#results-panel.visible { display: block; animation: fadeUp .35s ease; }
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── PRODUCT ID BAR ─────────────────────────────────────────────────── */
+.product-id-bar {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 20px 24px;
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  box-shadow: 0 1px 3px rgba(0,0,0,.04);
+}
+.family-badge {
+  padding: 6px 14px;
+  background: var(--dark);
+  color: #fff;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  white-space: nowrap;
+}
+.chapter-badge {
+  padding: 5px 12px;
+  background: rgba(212,63,0,.1);
+  color: var(--accent);
+  border: 1px solid rgba(212,63,0,.2);
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.conf-meter { flex: 1; min-width: 200px; }
+.conf-meter-label {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 6px;
+}
+.conf-meter-label span { font-size: 13px; font-weight: 700; color: var(--ink2); }
+.conf-meter-label .pct { font-size: 20px; font-weight: 900; }
+.conf-track {
+  height: 10px; background: var(--bg3);
+  border-radius: 6px; overflow: hidden;
+}
+.conf-fill {
+  height: 100%; border-radius: 6px;
+  background: linear-gradient(90deg, var(--accent), #ff7a45);
+  transition: width 1s cubic-bezier(.4,0,.2,1);
+  width: 0;
+}
+.status-pill {
+  padding: 6px 14px; border-radius: 20px;
+  font-size: 12px; font-weight: 800;
+  text-transform: uppercase; letter-spacing: .05em;
+  white-space: nowrap;
+}
+.status-approved  { background: #e3f6ec; color: #0a7a4d; }
+.status-candidate { background: #e7efff; color: #1857c4; }
+.status-needs     { background: #f7efd9; color: #8a6510; }
+.status-blocked   { background: #fde8df; color: #a93610; }
+
+/* ─── FLOW DIAGRAM ───────────────────────────────────────────────────── */
+.flow-panel {
+  background: linear-gradient(135deg, #111 0%, #20242f 100%);
+  border-radius: 14px;
+  padding: 20px 22px;
+  margin-bottom: 18px;
+  overflow: hidden;
+  position: relative;
+}
+.flow-panel .panel-label {
+  font-size: 11px; font-weight: 800; text-transform: uppercase;
+  letter-spacing: .15em; color: var(--orange-light); margin-bottom: 16px;
+}
+.flow-steps {
+  display: flex; gap: 0; align-items: stretch;
+}
+.flow-step {
+  flex: 1;
+  background: rgba(255,255,255,.07);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 8px;
+  padding: 12px 10px;
+  text-align: center;
+  position: relative;
+  transition: background .2s;
+}
+.flow-step.active {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.flow-step:not(:last-child)::after {
+  content: "→";
+  position: absolute;
+  right: -14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--orange-light);
+  font-weight: 700;
+  font-size: 14px;
+  z-index: 2;
+}
+.flow-step .fs-num {
+  width: 20px; height: 20px; border-radius: 50%;
+  background: rgba(255,255,255,.15);
+  color: #fff; font-size: 10px; font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 6px;
+}
+.flow-step.active .fs-num { background: rgba(255,255,255,.3); }
+.flow-step .fs-title { font-size: 10.5px; font-weight: 800; color: #fff; text-transform: uppercase; letter-spacing: .05em; }
+.flow-step .fs-sub { font-size: 9.5px; color: #bfc4d1; margin-top: 3px; line-height: 1.4; }
+.flow-step.active .fs-sub { color: #ffe3d7; }
+@media (max-width: 600px) {
+  .flow-steps { flex-direction: column; gap: 8px; }
+  .flow-step:not(:last-child)::after { content: "↓"; right: auto; top: auto; bottom: -14px; left: 50%; transform: translateX(-50%); }
+  .flow-step { padding: 10px; }
+}
+
+/* ─── COUNTRY RESULTS GRID ───────────────────────────────────────────── */
+.country-results {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 14px;
+  margin-bottom: 18px;
+}
+.country-result-card {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 16px;
+  transition: box-shadow .15s;
+  box-shadow: 0 1px 2px rgba(0,0,0,.03);
+}
+.country-result-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,.08); }
+.cr-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.cr-country { font-size: 14px; font-weight: 800; display: flex; align-items: center; gap: 7px; }
+.cr-flag { font-size: 18px; }
+.cr-codes { margin-bottom: 10px; }
+.cr-hs6 { font-size: 12px; color: var(--muted); margin-bottom: 3px; }
+.cr-hs6 span { font-size: 18px; font-weight: 900; color: var(--ink); letter-spacing: .01em; font-family: 'JetBrains Mono', monospace; }
+.cr-national { font-size: 12px; color: var(--muted); }
+.cr-national span { font-size: 14px; font-weight: 800; color: var(--accent); font-family: 'JetBrains Mono', monospace; }
+.cr-conf-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.cr-conf-pill {
+  padding: 3px 9px; border-radius: 12px;
+  font-size: 11px; font-weight: 800;
+}
+.cr-reasons { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+.reason-tag {
+  font-size: 10px; font-weight: 700; padding: 2px 7px;
+  background: var(--bg3); color: var(--ink2);
+  border-radius: 3px; text-transform: uppercase; letter-spacing: .04em;
+}
+
+/* ─── EVIDENCE PANEL ─────────────────────────────────────────────────── */
+.evidence-list { list-style: none; margin: 0; padding: 0; }
+.evidence-list li {
+  display: flex; align-items: flex-start; gap: 9px;
+  padding: 8px 0; border-bottom: 1px solid var(--bg3);
+  font-size: 13.5px;
+}
+.evidence-list li:last-child { border-bottom: none; }
+.ev-icon { flex-shrink: 0; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; margin-top: 1px; }
+.ev-icon.ok  { background: #e3f6ec; color: #0a7a4d; }
+.ev-icon.warn{ background: #f7efd9; color: #8a6510; }
+.ev-text strong { display: block; font-weight: 700; font-size: 13px; color: var(--ink); }
+.ev-text span { font-size: 12px; color: var(--muted); }
+
+/* ─── API RESPONSE BLOCK ─────────────────────────────────────────────── */
+.api-toggle {
+  display: flex; align-items: center; justify-content: space-between;
+  cursor: pointer; user-select: none;
+  padding: 12px 0;
+}
+.api-toggle-label { font-size: 13px; font-weight: 700; color: var(--ink2); display: flex; align-items: center; gap: 8px; }
+.api-caret { font-size: 12px; color: var(--muted); transition: transform .2s; }
+.api-caret.open { transform: rotate(180deg); }
+.api-block {
+  background: #0b0b0c;
+  color: #d4d4dc;
+  border-radius: 10px;
+  padding: 16px 18px;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 12px;
+  line-height: 1.7;
+  overflow-x: auto;
+  border: 1px solid #292a32;
+  margin-top: 6px;
+  display: none;
+}
+.api-block.open { display: block; animation: fadeUp .2s ease; }
+.k  { color: #7ab7ff; }
+.s  { color: #9ee09e; }
+.n  { color: #ffb56b; }
+.b  { color: #c9aeff; }
+.c  { color: #8b93a7; }
+
+/* ─── MISSING ATTRS PANEL ────────────────────────────────────────────── */
+.missing-attrs { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+.missing-item {
+  display: flex; align-items: flex-start; gap: 9px;
+  padding: 10px 12px;
+  background: #fff8f5;
+  border: 1px solid rgba(212,63,0,.15);
+  border-radius: 8px;
+  font-size: 13px; color: var(--ink2);
+}
+.missing-item .mi-icon { color: var(--accent); flex-shrink: 0; font-size: 14px; }
+
+/* ─── EMPTY STATE ────────────────────────────────────────────────────── */
+.empty-state {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  min-height: 340px;
+  text-align: center; padding: 40px;
+  color: var(--muted);
+}
+.empty-icon { font-size: 48px; margin-bottom: 16px; opacity: .4; }
+.empty-state p { font-size: 14px; max-width: 260px; line-height: 1.6; }
+
+/* ─── FORM DIVIDER ───────────────────────────────────────────────────── */
+.form-divider {
+  height: 1px; background: var(--line); margin: 18px 0;
+}
+.form-section-label {
+  font-size: 11px; font-weight: 800; text-transform: uppercase;
+  letter-spacing: .12em; color: var(--muted); margin-bottom: 14px;
+  display: flex; align-items: center; gap: 6px;
+}
+
+/* ─── SCROLL ANCHOR ──────────────────────────────────────────────────── */
+#results-anchor { scroll-margin-top: 20px; }
+
+/* ─── MISCELLANEOUS ──────────────────────────────────────────────────── */
+.pill {
+  display: inline-block; font-size: 11px; font-weight: 800;
+  padding: 3px 9px; border-radius: 20px;
+  letter-spacing: .02em; white-space: nowrap;
+}
+.p-blue   { background: #e7efff; color: #1857c4; }
+.p-green  { background: #e3f6ec; color: #0a7a4d; }
+.p-amber  { background: #f7efd9; color: #8a6510; }
+.p-orange { background: #fde8df; color: #a93610; }
+
+.section-divider {
+  height: 1px; background: var(--line); margin: 0 0 18px;
+}
+
+.two-col-form { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 500px) { .two-col-form { grid-template-columns: 1fr; } }
+
+/* ─── REQUEST ID BADGE ───────────────────────────────────────────────── */
+.req-id-row {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 18px;
+  padding: 10px 14px; background: var(--bg2);
+  border: 1px solid var(--line); border-radius: 8px;
+}
+.req-id-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.req-id-val { font-size: 12.5px; font-family: 'JetBrains Mono', monospace; font-weight: 600; color: var(--ink2); }
+.req-ts { font-size: 11px; color: var(--muted); margin-left: auto; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     HERO HEADER
+════════════════════════════════════════════════════════════════════ -->
+<header class="hero">
+  <div class="wrap">
+    <div class="hero-inner">
+      <div class="hero-text">
+        <p class="kicker">Nike Technology · Trade Compliance · Product Data</p>
+        <h1>AI-Powered Product<br><span>Classification API</span></h1>
+        <p class="sub">
+          Interactive proof-of-concept — submit product attributes, select target markets,
+          and receive simulated HS classification results with confidence scoring and
+          evidence breakdown.
+        </p>
+        <span class="conf-badge">Working POC · Simulated Engine · For Discussion Only</span>
+      </div>
+    </div>
+    <div class="hero-stats">
+      <div class="hero-stat"><div class="n">8+</div><div class="l">Product families</div></div>
+      <div class="hero-stat"><div class="n">5</div><div class="l">Markets</div></div>
+      <div class="hero-stat"><div class="n">HS6</div><div class="l">Global foundation</div></div>
+      <div class="hero-stat"><div class="n">100%</div><div class="l">Evidence tracing</div></div>
+      <div class="hero-stat"><div class="n">API</div><div class="l">-first architecture</div></div>
+    </div>
+  </div>
+</header>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     MAIN CONTENT
+════════════════════════════════════════════════════════════════════ -->
+<main>
+  <div class="wrap">
+    <div class="poc-layout">
+
+      <!-- ── LEFT PANEL: INPUT FORM ─────────────────────────────────── -->
+      <div class="input-panel">
+        <div class="card">
+          <div class="card-title">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="12" height="12" rx="2.5" stroke="currentColor" stroke-width="1.5"/><path d="M4 5h6M4 7.5h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            Product Input
+          </div>
+
+          <!-- Example Presets -->
+          <div class="form-section-label">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1l1.3 2.6L10 4.1l-2 1.95.47 2.75L6 7.4l-2.47 1.4.47-2.75L2 4.1l2.7-.5L6 1z" fill="currentColor"/></svg>
+            Quick Examples
+          </div>
+          <div class="examples-row">
+            <button class="ex-btn" onclick="loadExample('shoe')">
+              <span class="icon">👟</span> Running Shoe
+            </button>
+            <button class="ex-btn" onclick="loadExample('jacket')">
+              <span class="icon">🧥</span> Training Jacket
+            </button>
+            <button class="ex-btn" onclick="loadExample('bag')">
+              <span class="icon">🎒</span> Drawstring Backpack
+            </button>
+          </div>
+
+          <div class="form-divider"></div>
+          <div class="form-section-label">Product Details</div>
+
+          <!-- Description -->
+          <div class="form-group">
+            <label for="f-desc">Product Description</label>
+            <textarea id="f-desc" placeholder="e.g. Men's running shoe with mesh upper and rubber outsole"></textarea>
+          </div>
+
+          <!-- Material -->
+          <div class="form-group">
+            <label for="f-material">Fiber / Material Content</label>
+            <input type="text" id="f-material" placeholder="e.g. 88% polyester, 12% elastane">
+          </div>
+
+          <!-- Construction + Gender row -->
+          <div class="two-col-form">
+            <div class="form-group">
+              <label for="f-construction">Construction</label>
+              <select id="f-construction">
+                <option value="">Select…</option>
+                <option value="Knit">Knit</option>
+                <option value="Woven">Woven</option>
+                <option value="Molded">Molded</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="f-gender">Gender / Age Group</label>
+              <select id="f-gender">
+                <option value="">Select…</option>
+                <option value="Men's">Men's</option>
+                <option value="Women's">Women's</option>
+                <option value="Unisex">Unisex</option>
+                <option value="Kids'">Kids'</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Intended Use -->
+          <div class="form-group">
+            <label for="f-use">Intended Use</label>
+            <select id="f-use">
+              <option value="">Select…</option>
+              <option value="Athletic">Athletic</option>
+              <option value="Casual">Casual</option>
+              <option value="Protective">Protective</option>
+              <option value="Multi-use">Multi-use</option>
+            </select>
+          </div>
+
+          <div class="form-divider"></div>
+
+          <!-- Country Selector -->
+          <div class="form-section-label">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="5" stroke="currentColor" stroke-width="1.4"/><path d="M6 1c0 0-3 2.5-3 5s3 5 3 5" stroke="currentColor" stroke-width="1.2"/><path d="M6 1c0 0 3 2.5 3 5s-3 5-3 5" stroke="currentColor" stroke-width="1.2"/><path d="M1.5 6h9" stroke="currentColor" stroke-width="1.2"/></svg>
+            Target Markets
+          </div>
+          <div class="country-grid" id="country-grid">
+            <label class="country-cb checked" id="cb-us">
+              <input type="checkbox" value="US" checked onchange="toggleCountry(this,'cb-us')">
+              🇺🇸 United States
+            </label>
+            <label class="country-cb checked" id="cb-eu">
+              <input type="checkbox" value="EU" checked onchange="toggleCountry(this,'cb-eu')">
+              🇪🇺 European Union
+            </label>
+            <label class="country-cb" id="cb-in">
+              <input type="checkbox" value="IN" onchange="toggleCountry(this,'cb-in')">
+              🇮🇳 India
+            </label>
+            <label class="country-cb" id="cb-cn">
+              <input type="checkbox" value="CN" onchange="toggleCountry(this,'cb-cn')">
+              🇨🇳 China
+            </label>
+            <label class="country-cb" id="cb-mx">
+              <input type="checkbox" value="MX" onchange="toggleCountry(this,'cb-mx')">
+              🇲🇽 Mexico
+            </label>
+          </div>
+
+          <div style="margin-top: 20px;">
+            <button class="btn-classify" id="classify-btn" onclick="runClassification()">
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 2v4M9 12v4M2 9h4M12 9h4M4.22 4.22l2.83 2.83M10.95 10.95l2.83 2.83M13.78 4.22l-2.83 2.83M7.05 10.95l-2.83 2.83" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+              Classify Product
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── RIGHT PANEL: RESULTS ───────────────────────────────────── -->
+      <div id="results-anchor">
+        <!-- Empty state -->
+        <div id="empty-state" class="card empty-state">
+          <div class="empty-icon">⚡</div>
+          <strong style="font-size: 16px; color: var(--ink2); margin-bottom: 8px; display:block;">Ready to classify</strong>
+          <p>Fill in product details on the left, select your target markets, and click <strong>Classify Product</strong> to see simulated HS classification results.</p>
+        </div>
+
+        <!-- Results panel -->
+        <div id="results-panel">
+
+          <!-- 1. Request ID bar -->
+          <div class="req-id-row">
+            <span class="req-id-label">Request ID</span>
+            <span class="req-id-val" id="req-id-val">—</span>
+            <span class="req-ts" id="req-ts">—</span>
+          </div>
+
+          <!-- 2. Product identification bar -->
+          <div class="product-id-bar">
+            <span class="family-badge" id="family-badge">—</span>
+            <span class="chapter-badge" id="chapter-badge">—</span>
+            <div class="conf-meter">
+              <div class="conf-meter-label">
+                <span>Confidence Score</span>
+                <span class="pct" id="conf-pct" style="color: var(--accent)">—</span>
+              </div>
+              <div class="conf-track">
+                <div class="conf-fill" id="conf-fill"></div>
+              </div>
+            </div>
+            <span class="status-pill" id="overall-status">—</span>
+          </div>
+
+          <!-- 3. Classification flow diagram -->
+          <div class="flow-panel">
+            <div class="panel-label">Classification Flow</div>
+            <div class="flow-steps" id="flow-steps">
+              <div class="flow-step" id="fs1">
+                <div class="fs-num">1</div>
+                <div class="fs-title">Product Inputs</div>
+                <div class="fs-sub">PLM · Specs · Attributes</div>
+              </div>
+              <div class="flow-step" id="fs2">
+                <div class="fs-num">2</div>
+                <div class="fs-title">Normalize</div>
+                <div class="fs-sub">Attributes · Evidence</div>
+              </div>
+              <div class="flow-step active" id="fs3">
+                <div class="fs-num">3</div>
+                <div class="fs-title">Rules + AI</div>
+                <div class="fs-sub">Legal hierarchy + reasoning</div>
+              </div>
+              <div class="flow-step" id="fs4">
+                <div class="fs-num">4</div>
+                <div class="fs-title">Country Adapters</div>
+                <div class="fs-sub">US · EU · IN · CN · MX</div>
+              </div>
+              <div class="flow-step" id="fs5">
+                <div class="fs-num">5</div>
+                <div class="fs-title">API Response</div>
+                <div class="fs-sub">Codes · Evidence · Status</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4. Per-country results -->
+          <div class="card" style="margin-bottom: 18px;">
+            <div class="card-title">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.4"/><path d="M7 1.5C7 1.5 4.5 4 4.5 7s2.5 5.5 2.5 5.5" stroke="currentColor" stroke-width="1.2"/><path d="M7 1.5c0 0 2.5 2.5 2.5 5.5s-2.5 5.5-2.5 5.5" stroke="currentColor" stroke-width="1.2"/><path d="M1.5 7h11" stroke="currentColor" stroke-width="1.2"/></svg>
+              Country Classification Results
+            </div>
+            <div class="country-results" id="country-results">
+              <!-- filled by JS -->
+            </div>
+          </div>
+
+          <!-- 5. Evidence panel -->
+          <div class="card" style="margin-bottom: 18px;">
+            <div class="card-title">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 3h10M2 7h7M2 11h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+              Evidence &amp; Attribute Review
+            </div>
+            <ul class="evidence-list" id="evidence-list">
+              <!-- filled by JS -->
+            </ul>
+
+            <!-- Missing attributes -->
+            <div id="missing-section" style="margin-top: 14px; display: none;">
+              <div style="font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .09em; color: var(--amber); margin-bottom: 8px;">
+                ⚠ Missing / Weak Attributes
+              </div>
+              <div class="missing-attrs" id="missing-list">
+                <!-- filled by JS -->
+              </div>
+            </div>
+          </div>
+
+          <!-- 6. API Response preview -->
+          <div class="card">
+            <div class="card-title">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="2" width="12" height="10" rx="2" stroke="currentColor" stroke-width="1.4"/><path d="M4 5.5l2 2-2 2M8 9.5h2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              API Response Preview
+            </div>
+            <div class="api-toggle" onclick="toggleApi()">
+              <span class="api-toggle-label">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 3l3.5 3-3.5 3M7 9h2.5" stroke="#666b75" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                POST /classification/v1/evaluate — Simulated JSON Response
+              </span>
+              <span class="api-caret" id="api-caret">▼</span>
+            </div>
+            <div class="api-block" id="api-block">
+              <!-- filled by JS -->
+            </div>
+          </div>
+
+        </div><!-- /results-panel -->
+      </div><!-- /results-anchor -->
+    </div><!-- /poc-layout -->
+  </div><!-- /wrap -->
+</main>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     CLASSIFICATION ENGINE (pure JS)
+════════════════════════════════════════════════════════════════════ -->
+<script>
+// ─── COUNTRY TOGGLE ───────────────────────────────────────────────────────
+function toggleCountry(cb, labelId) {
+  const label = document.getElementById(labelId);
+  if (cb.checked) label.classList.add('checked');
+  else label.classList.remove('checked');
+}
+
+// ─── EXAMPLE PRESETS ──────────────────────────────────────────────────────
+const EXAMPLES = {
+  shoe: {
+    desc:         "Running shoe with breathable mesh upper and rubber outsole — lightweight athletic trainer",
+    material:     "Upper: 85% polyester mesh, 15% synthetic leather. Outsole: 100% rubber",
+    construction: "Knit",
+    gender:       "Men's",
+    use:          "Athletic"
+  },
+  jacket: {
+    desc:         "Training jacket with full-zip front — wind-resistant performance outerwear",
+    material:     "100% nylon woven shell, polyester lining",
+    construction: "Woven",
+    gender:       "Women's",
+    use:          "Athletic"
+  },
+  bag: {
+    desc:         "Drawstring backpack with cinch closure — lightweight gym and sports bag",
+    material:     "100% polyester textile outer surface",
+    construction: "Other",
+    gender:       "Unisex",
+    use:          "Multi-use"
+  }
+};
+
+function loadExample(key) {
+  const ex = EXAMPLES[key];
+  document.getElementById('f-desc').value         = ex.desc;
+  document.getElementById('f-material').value     = ex.material;
+  document.getElementById('f-construction').value = ex.construction;
+  document.getElementById('f-gender').value       = ex.gender;
+  document.getElementById('f-use').value          = ex.use;
+}
+
+// ─── HS CODE DATABASE ──────────────────────────────────────────────────────
+const HS_DB = {
+  FOOTWEAR: {
+    family:  'FOOTWEAR',
+    chapter: 'Ch. 64',
+    emoji:   '👟',
+    hs6_default:   '640299',
+    hs6_athletic:  '640411',
+    codes: {
+      US:  { national: '6404.11.90', note: 'Athletic, textile upper' },
+      EU:  { national: '64041190',   note: 'CN8' },
+      IN:  { national: '64041190',   note: 'ITC-HS' },
+      CN:  { national: '6404110090', note: 'China commodity code' },
+      MX:  { national: '6404.11.01', note: 'Mexico tariff fraction' }
+    },
+    reasons: ['FOOTWEAR_ATHLETIC', 'TEXTILE_UPPER', 'RUBBER_OUTSOLE']
+  },
+  APPAREL_KNIT: {
+    family:  'APPAREL (KNIT)',
+    chapter: 'Ch. 61',
+    emoji:   '👕',
+    hs6_synthetic: '610990',
+    hs6_cotton:    '610910',
+    codes: {
+      US:  { national: '6109.90.10', note: 'Man-made fiber' },
+      EU:  { national: '61099090',   note: 'CN8' },
+      IN:  { national: '61099090',   note: 'ITC-HS' },
+      CN:  { national: '6109900090', note: 'China commodity code' },
+      MX:  { national: '6109.90.99', note: 'Mexico tariff fraction' }
+    },
+    reasons: ['APPAREL_KNIT', 'SYNTHETIC_FIBER_DOMINANT', 'ATHLETIC_USE']
+  },
+  APPAREL_WOVEN: {
+    family:  'APPAREL (WOVEN)',
+    chapter: 'Ch. 62',
+    emoji:   '🧥',
+    hs6_mens:   '620193',
+    hs6_womens: '620293',
+    codes_mens: {
+      US: { national: '6201.93.35', note: 'Men\'s synthetic jacket' },
+      EU: { national: '62019300',   note: 'CN8' },
+      IN: { national: '62019300',   note: 'ITC-HS' },
+      CN: { national: '6201930090', note: 'China commodity code' },
+      MX: { national: '6201.93.01', note: 'Mexico tariff fraction' }
+    },
+    codes_womens: {
+      US: { national: '6202.93.45', note: 'Women\'s synthetic jacket' },
+      EU: { national: '62029300',   note: 'CN8' },
+      IN: { national: '62029300',   note: 'ITC-HS' },
+      CN: { national: '6202930090', note: 'China commodity code' },
+      MX: { national: '6202.93.01', note: 'Mexico tariff fraction' }
+    },
+    reasons: ['APPAREL_WOVEN', 'OUTERWEAR', 'SYNTHETIC_FIBER']
+  },
+  BAGS: {
+    family:  'BAGS & PACKS',
+    chapter: 'Ch. 42',
+    emoji:   '🎒',
+    hs6_default: '420292',
+    codes: {
+      US: { national: '4202.92.30', note: 'Textile outer surface' },
+      EU: { national: '42029219',   note: 'CN8' },
+      IN: { national: '42029200',   note: 'ITC-HS' },
+      CN: { national: '4202920000', note: 'China commodity code' },
+      MX: { national: '4202.92.99', note: 'Mexico tariff fraction' }
+    },
+    reasons: ['BAGS_PACKS', 'TEXTILE_OUTER_SURFACE', 'DRAWSTRING_CLOSURE']
+  },
+  EQUIPMENT: {
+    family:  'SPORTS EQUIPMENT',
+    chapter: 'Ch. 95',
+    emoji:   '⚽',
+    hs6_default: '950699',
+    codes: {
+      US: { national: '9506.99.60', note: 'Other sport articles' },
+      EU: { national: '95069900',   note: 'CN8' },
+      IN: { national: '95069900',   note: 'ITC-HS' },
+      CN: { national: '9506990000', note: 'China commodity code' },
+      MX: { national: '9506.99.99', note: 'Mexico tariff fraction' }
+    },
+    reasons: ['SPORTS_EQUIPMENT', 'ATHLETIC_USE', 'GOODS_FOR_SPORT']
+  },
+  ACCESSORIES: {
+    family:  'ACCESSORIES',
+    chapter: 'Ch. 61/63',
+    emoji:   '🧢',
+    hs6_default: '621490',
+    codes: {
+      US: { national: '6307.90.98', note: 'Other made-up textile articles' },
+      EU: { national: '63079098',   note: 'CN8' },
+      IN: { national: '63079090',   note: 'ITC-HS' },
+      CN: { national: '6307909090', note: 'China commodity code' },
+      MX: { national: '6307.90.99', note: 'Mexico tariff fraction' }
+    },
+    reasons: ['ACCESSORIES_TEXTILE', 'WEARABLE_ITEM', 'MADE_UP_ARTICLE']
+  },
+  MATERIALS: {
+    family:  'MATERIALS / TEXTILES',
+    chapter: 'Ch. 50–60',
+    emoji:   '🧵',
+    hs6_default: '540761',
+    codes: {
+      US: { national: '5407.61.99', note: 'Woven fabric, synthetic yarn' },
+      EU: { national: '54076190',   note: 'CN8' },
+      IN: { national: '54076190',   note: 'ITC-HS' },
+      CN: { national: '5407619090', note: 'China commodity code' },
+      MX: { national: '5407.61.01', note: 'Mexico tariff fraction' }
+    },
+    reasons: ['FABRIC_MATERIAL', 'SYNTHETIC_TEXTILE', 'RAW_MATERIAL']
+  }
+};
+
+// ─── PRODUCT FAMILY DETECTION ─────────────────────────────────────────────
+function detectFamily(desc, construction) {
+  const d = (desc || '').toLowerCase();
+  const c = (construction || '').toLowerCase();
+
+  // Footwear
+  if (/\b(shoe|boot|sneaker|sandal|cleat|trainer|runner|slide|footwear|outsole|midsole|upper)\b/.test(d))
+    return 'FOOTWEAR';
+
+  // Bags
+  if (/\b(bag|backpack|duffel|pack|pouch|sack|tote)\b/.test(d))
+    return 'BAGS';
+
+  // Equipment
+  if (/\b(ball|glove|mat|racket|racquet|helmet|pad|equipment|guard|brace)\b/.test(d))
+    return 'EQUIPMENT';
+
+  // Accessories
+  if (/\b(cap|hat|gloves|belt|sock|wristband|headband|visor|beanie)\b/.test(d))
+    return 'ACCESSORIES';
+
+  // Materials
+  if (/\b(fabric|yarn|textile|foam|mesh material|raw|trim|lining)\b/.test(d))
+    return 'MATERIALS';
+
+  // Apparel — differentiate knit vs woven
+  if (/\b(shirt|top|jersey|hoodie|tee|tank|singlet|vest|sweater|sweatshirt|pullover|fleece)\b/.test(d))
+    return 'APPAREL_KNIT';
+
+  if (/\b(jacket|parka|windbreaker|shorts|pants|trousers|skirt|dress|coat|anorak|blouson)\b/.test(d))
+    return 'APPAREL_WOVEN';
+
+  // Construction fallback for apparel
+  if (c === 'knit')  return 'APPAREL_KNIT';
+  if (c === 'woven') return 'APPAREL_WOVEN';
+
+  return 'APPAREL_KNIT'; // default
+}
+
+// ─── HS6 RESOLVER ─────────────────────────────────────────────────────────
+function resolveHS6(family, gender, material, use) {
+  const mat = (material || '').toLowerCase();
+  const isSynthetic = /polyester|nylon|elastane|spandex|lycra|acrylic|synthetic/.test(mat);
+  const isCotton    = /cotton/.test(mat);
+  const isAthletic  = (use || '').toLowerCase() === 'athletic';
+  const isWomens    = /women/i.test(gender || '');
+
+  switch (family) {
+    case 'FOOTWEAR':
+      return isAthletic ? '640411' : '640299';
+    case 'APPAREL_KNIT':
+      return isCotton ? '610910' : '610990';
+    case 'APPAREL_WOVEN':
+      return isWomens ? '620293' : '620193';
+    case 'BAGS':       return '420292';
+    case 'EQUIPMENT':  return '950699';
+    case 'ACCESSORIES':return '621490';
+    case 'MATERIALS':  return '540761';
+    default:           return '610990';
+  }
+}
+
+// ─── GET NATIONAL CODES ───────────────────────────────────────────────────
+function getNationalCodes(family, gender) {
+  const isWomens = /women/i.test(gender || '');
+  if (family === 'APPAREL_WOVEN') {
+    return isWomens ? HS_DB.APPAREL_WOVEN.codes_womens : HS_DB.APPAREL_WOVEN.codes_mens;
+  }
+  return (HS_DB[family] || HS_DB.APPAREL_KNIT).codes;
+}
+
+// ─── CONFIDENCE SCORING ───────────────────────────────────────────────────
+function calcConfidence(desc, material, construction, gender, use) {
+  let score = 50;
+  if (desc && desc.trim().length > 5)            score += 10;
+  if (material && material.trim().length > 3)    score += 15;
+  if (construction && construction !== 'Other')  score += 10;
+  if (gender && gender !== 'Unisex' && gender)   score += 8;
+  if (use && use !== 'Multi-use' && use)         score += 7;
+  return Math.min(100, score);
+}
+
+function getStatusFromScore(score) {
+  if (score >= 85) return { label: 'APPROVED',          cls: 'status-approved',  pillCls: 'p-green'  };
+  if (score >= 70) return { label: 'CANDIDATE',         cls: 'status-candidate', pillCls: 'p-blue'   };
+  if (score >= 55) return { label: 'NEEDS INFORMATION', cls: 'status-needs',     pillCls: 'p-amber'  };
+  return             { label: 'BLOCKED',          cls: 'status-blocked',  pillCls: 'p-orange' };
+}
+
+// ─── MISSING ATTRIBUTES ───────────────────────────────────────────────────
+function getMissingAttrs(family, material, construction, desc) {
+  const missing = [];
+  if (!material || material.trim().length < 3)
+    missing.push('Fiber / material composition required for tariff heading resolution');
+  if (construction === 'Other' || !construction)
+    missing.push('Construction method clarification needed (Knit / Woven / Molded)');
+  if (family === 'FOOTWEAR' && (!construction || construction === 'Other'))
+    missing.push('Upper material surface area specification needed for Ch. 64 subheading');
+  if ((family === 'APPAREL_KNIT' || family === 'APPAREL_WOVEN') && (!material || material.trim().length < 3))
+    missing.push('Dominant fiber by weight required (GRI fiber composition rule)');
+  return missing;
+}
+
+// ─── COUNTRY FLAG/NAME LOOKUP ─────────────────────────────────────────────
+const COUNTRY_META = {
+  US: { flag: '🇺🇸', name: 'United States', scheme: 'HTSUS' },
+  EU: { flag: '🇪🇺', name: 'European Union', scheme: 'CN8 / TARIC' },
+  IN: { flag: '🇮🇳', name: 'India',          scheme: 'ITC-HS' },
+  CN: { flag: '🇨🇳', name: 'China',          scheme: 'China HS' },
+  MX: { flag: '🇲🇽', name: 'Mexico',         scheme: 'TIGIE' }
+};
+
+// Per-country confidence variation (realistic variation)
+const COUNTRY_VARIANCE = { US: 0, EU: -2, IN: -6, CN: -8, MX: -4 };
+
+// ─── REQUEST ID GENERATOR ─────────────────────────────────────────────────
+function genReqId() {
+  return 'REQ-' + new Date().getFullYear() + '-' + String(Math.floor(Math.random()*900000)+100000);
+}
+
+// ─── MAIN CLASSIFICATION RUNNER ───────────────────────────────────────────
+function runClassification() {
+  const desc         = document.getElementById('f-desc').value.trim();
+  const material     = document.getElementById('f-material').value.trim();
+  const construction = document.getElementById('f-construction').value;
+  const gender       = document.getElementById('f-gender').value;
+  const use          = document.getElementById('f-use').value;
+
+  // Collect selected countries
+  const countries = [];
+  document.querySelectorAll('#country-grid input[type="checkbox"]').forEach(cb => {
+    if (cb.checked) countries.push(cb.value);
+  });
+
+  if (countries.length === 0) {
+    alert('Please select at least one target market.');
+    return;
+  }
+  if (!desc && !material) {
+    alert('Please enter at least a product description or material content.');
+    return;
+  }
+
+  // Animate button
+  const btn = document.getElementById('classify-btn');
+  btn.classList.add('loading');
+  btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 18 18" fill="none" style="animation:spin .8s linear infinite"><path d="M9 2a7 7 0 1 1-4.95 2.05" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg> Classifying…';
+
+  setTimeout(() => {
+    // Run the engine
+    const family   = detectFamily(desc, construction);
+    const hs6      = resolveHS6(family, gender, material, use);
+    const codes    = getNationalCodes(family, gender);
+    const score    = calcConfidence(desc, material, construction, gender, use);
+    const status   = getStatusFromScore(score);
+    const missing  = getMissingAttrs(family, material, construction, desc);
+    const meta     = HS_DB[family] || HS_DB.APPAREL_KNIT;
+    const reasons  = meta.reasons || ['PRODUCT_CLASSIFIED'];
+    const reqId    = genReqId();
+    const now      = new Date();
+
+    // Render results
+    renderResults({
+      family, hs6, codes, score, status, missing, meta, reasons,
+      countries, desc, material, construction, gender, use, reqId, now
+    });
+
+    // Reset button
+    btn.classList.remove('loading');
+    btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 2v4M9 12v4M2 9h4M12 9h4M4.22 4.22l2.83 2.83M10.95 10.95l2.83 2.83M13.78 4.22l-2.83 2.83M7.05 10.95l-2.83 2.83" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg> Classify Product';
+
+    // Scroll to results on mobile
+    if (window.innerWidth < 900) {
+      document.getElementById('results-anchor').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, 900);
+}
+
+// ─── RENDER ───────────────────────────────────────────────────────────────
+function renderResults(r) {
+  const { family, hs6, codes, score, status, missing, meta, reasons, countries,
+          desc, material, construction, gender, use, reqId, now } = r;
+
+  // Show panel, hide empty state
+  document.getElementById('empty-state').style.display = 'none';
+  const panel = document.getElementById('results-panel');
+  panel.style.display = 'block';
+  panel.classList.remove('visible');
+  void panel.offsetWidth; // reflow
+  panel.classList.add('visible');
+
+  // Request ID
+  document.getElementById('req-id-val').textContent = reqId;
+  document.getElementById('req-ts').textContent = now.toLocaleString('en-US', {
+    month: 'short', day: 'numeric', year: 'numeric',
+    hour: '2-digit', minute: '2-digit', second: '2-digit'
+  });
+
+  // Family badge + chapter
+  document.getElementById('family-badge').textContent = (meta.emoji || '') + ' ' + meta.family;
+  document.getElementById('chapter-badge').textContent = meta.chapter;
+
+  // Confidence meter
+  const confPct = document.getElementById('conf-pct');
+  const confFill = document.getElementById('conf-fill');
+  confPct.textContent = score + '%';
+  confPct.style.color = score >= 85 ? 'var(--green)' : score >= 70 ? 'var(--accent2)' : score >= 55 ? 'var(--amber)' : 'var(--red)';
+  confFill.style.width = '0';
+  confFill.style.background = score >= 85
+    ? 'linear-gradient(90deg, #0a8f5b, #34d390)'
+    : score >= 70 ? 'linear-gradient(90deg, #0a6cff, #5fa8ff)'
+    : score >= 55 ? 'linear-gradient(90deg, #c98a00, #f0c040)'
+    : 'linear-gradient(90deg, #c8321f, #e05040)';
+  setTimeout(() => { confFill.style.width = score + '%'; }, 80);
+
+  // Overall status
+  const overallStatus = document.getElementById('overall-status');
+  overallStatus.textContent = status.label;
+  overallStatus.className = 'status-pill ' + status.cls;
+
+  // Flow diagram — animate steps
+  animateFlow();
+
+  // Country results
+  const crContainer = document.getElementById('country-results');
+  crContainer.innerHTML = '';
+  countries.forEach((ctry, i) => {
+    const cm = COUNTRY_META[ctry] || { flag: '🌐', name: ctry, scheme: '' };
+    const nationalData = codes[ctry] || { national: hs6, note: '' };
+    const ctryScore = Math.max(40, Math.min(100, score + (COUNTRY_VARIANCE[ctry] || 0)));
+    const ctryStatus = getStatusFromScore(ctryScore);
+    const pillColor = ctryScore >= 85 ? '#e3f6ec;color:#0a7a4d'
+                    : ctryScore >= 70 ? '#e7efff;color:#1857c4'
+                    : ctryScore >= 55 ? '#f7efd9;color:#8a6510'
+                    : '#fde8df;color:#a93610';
+
+    crContainer.innerHTML += `
+      <div class="country-result-card" style="animation: fadeUp .3s ease ${i * 0.07}s both;">
+        <div class="cr-header">
+          <div class="cr-country">
+            <span class="cr-flag">${cm.flag}</span>
+            <span>${cm.name}</span>
+          </div>
+          <span class="status-pill ${ctryStatus.cls}" style="font-size:10px;padding:3px 9px;">${ctryStatus.label}</span>
+        </div>
+        <div class="cr-codes">
+          <div class="cr-hs6">HS6 <span>${hs6}</span></div>
+          <div class="cr-national">${cm.scheme} <span>${nationalData.national}</span></div>
+        </div>
+        <div class="cr-conf-row">
+          <span class="cr-conf-pill" style="background:${pillColor.split(';')[0].replace('background:','')};color:${pillColor.split(';')[1].replace('color:','')}">${ctryScore}% confidence</span>
+          <span style="font-size:11px;color:var(--muted)">${nationalData.note}</span>
+        </div>
+        <div class="cr-reasons">
+          ${reasons.slice(0,3).map(r => `<span class="reason-tag">${r}</span>`).join('')}
+        </div>
+      </div>`;
+  });
+
+  // Evidence list
+  const evList = document.getElementById('evidence-list');
+  evList.innerHTML = '';
+  const attributes = [
+    { label: 'Product Description', value: desc, key: 'description' },
+    { label: 'Fiber / Material Content', value: material, key: 'material' },
+    { label: 'Construction Method', value: construction, key: 'construction' },
+    { label: 'Gender / Age Group', value: gender, key: 'gender' },
+    { label: 'Intended Use', value: use, key: 'use' }
+  ];
+  attributes.forEach(attr => {
+    const filled = attr.value && attr.value !== '' && attr.value !== 'Other' && attr.value !== 'Unisex' && attr.value !== 'Multi-use';
+    const isWeak = attr.value === 'Other' || attr.value === 'Unisex' || attr.value === 'Multi-use';
+    const iconCls = filled ? 'ok' : (isWeak ? 'warn' : 'warn');
+    const icon = filled ? '✓' : '!';
+    const valueDisplay = attr.value || '<em style="color:var(--muted)">Not provided</em>';
+    const subText = filled
+      ? `Used for ${family.replace('_', ' ').toLowerCase()} classification`
+      : (isWeak ? `"${attr.value}" provides limited classification specificity` : 'Missing — reduces confidence score');
+    evList.innerHTML += `
+      <li>
+        <div class="ev-icon ${iconCls}">${icon}</div>
+        <div class="ev-text">
+          <strong>${attr.label}</strong>
+          <span>${attr.value ? attr.value : 'Not provided'} — ${subText}</span>
+        </div>
+      </li>`;
+  });
+
+  // Missing attributes
+  const missingSection = document.getElementById('missing-section');
+  const missingList = document.getElementById('missing-list');
+  if (missing.length > 0) {
+    missingSection.style.display = 'block';
+    missingList.innerHTML = missing.map(m =>
+      `<div class="missing-item"><span class="mi-icon">⚠</span><span>${m}</span></div>`
+    ).join('');
+  } else {
+    missingSection.style.display = 'none';
+  }
+
+  // API Response JSON
+  buildAPIPreview(r);
+}
+
+// ─── FLOW ANIMATION ───────────────────────────────────────────────────────
+function animateFlow() {
+  const steps = ['fs1','fs2','fs3','fs4','fs5'];
+  steps.forEach(id => document.getElementById(id).classList.remove('active'));
+  let i = 0;
+  const tick = () => {
+    if (i > 0) document.getElementById(steps[i-1]).classList.remove('active');
+    document.getElementById(steps[i]).classList.add('active');
+    i++;
+    if (i < steps.length) setTimeout(tick, 280);
+  };
+  tick();
+}
+
+// ─── API PREVIEW ──────────────────────────────────────────────────────────
+function buildAPIPreview(r) {
+  const { family, hs6, codes, score, status, missing, reasons, countries,
+          desc, material, construction, gender, use, reqId, now } = r;
+
+  const resultsJson = countries.map(ctry => {
+    const cm = COUNTRY_META[ctry] || { scheme: ctry };
+    const nationalData = codes[ctry] || { national: hs6, note: '' };
+    const ctryScore = Math.max(40, Math.min(100, score + (COUNTRY_VARIANCE[ctry] || 0)));
+    const ctryStatus = getStatusFromScore(ctryScore);
+    return `    {
+      <span class="k">"market"</span>: <span class="s">"${ctry}"</span>,
+      <span class="k">"scheme"</span>: <span class="s">"${cm.scheme || ctry}"</span>,
+      <span class="k">"hs6"</span>: <span class="s">"${hs6}"</span>,
+      <span class="k">"nationalCode"</span>: <span class="s">"${nationalData.national}"</span>,
+      <span class="k">"confidence"</span>: <span class="n">${ctryScore}.0</span>,
+      <span class="k">"classificationStatus"</span>: <span class="s">"${ctryStatus.label.replace(' ', '_')}"</span>,
+      <span class="k">"reasonCodes"</span>: [${reasons.map(rc => `<span class="s">"${rc}"</span>`).join(', ')}]
+    }`;
+  }).join(',\n');
+
+  const missingJson = missing.length > 0
+    ? missing.map(m => `<span class="s">"${m}"</span>`).join(',\n          ')
+    : '<span class="c">/* none */</span>';
+
+  const json = `<span class="c">POST /classification/v1/evaluate</span>
+{
+  <span class="k">"requestId"</span>: <span class="s">"${reqId}"</span>,
+  <span class="k">"timestamp"</span>: <span class="s">"${now.toISOString()}"</span>,
+  <span class="k">"status"</span>: <span class="s">"${status.label.replace(/ /g,'_')}"</span>,
+  <span class="k">"productFamily"</span>: <span class="s">"${family}"</span>,
+  <span class="k">"engineVersion"</span>: <span class="s">"v1.0-poc"</span>,
+  <span class="k">"confidenceScore"</span>: <span class="n">${score}.0</span>,
+  <span class="k">"attributes"</span>: {
+    <span class="k">"description"</span>: <span class="s">"${(desc||'').replace(/"/g,"'").slice(0,60)}${desc && desc.length>60 ? '…' : ''}"</span>,
+    <span class="k">"fiberContent"</span>: <span class="s">"${(material||'not provided').slice(0,50)}"</span>,
+    <span class="k">"construction"</span>: <span class="s">"${construction||'not specified'}"</span>,
+    <span class="k">"genderAgeGroup"</span>: <span class="s">"${gender||'not specified'}"</span>,
+    <span class="k">"intendedUse"</span>: <span class="s">"${use||'not specified'}"</span>
+  },
+  <span class="k">"missingAttributes"</span>: [
+          ${missingJson}
+  ],
+  <span class="k">"results"</span>: [
+${resultsJson}
+  ]
+}`;
+
+  document.getElementById('api-block').innerHTML = json;
+}
+
+// ─── API TOGGLE ───────────────────────────────────────────────────────────
+function toggleApi() {
+  const block = document.getElementById('api-block');
+  const caret = document.getElementById('api-caret');
+  block.classList.toggle('open');
+  caret.classList.toggle('open');
+}
+
+// ─── CSS SPIN ANIMATION ───────────────────────────────────────────────────
+const styleEl = document.createElement('style');
+styleEl.textContent = '@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }';
+document.head.appendChild(styleEl);
+</script>
+</body>
+</html>
